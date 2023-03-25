@@ -1,0 +1,6 @@
+# clion user setting
+.idea/*
+.vscode/*
+
+# cmake build
+cmake-build-*/*
