@@ -28,8 +28,12 @@ public:
     bool insert_node(LINKED_LIST_NODE_T *node);
     bool delete_node(LINKED_LIST_NODE_T *node);
     void delete_list();
+    uint64_t count() const {
+        return count_;
+    }
     // for traverse the linked list
     LINKED_LIST_NODE_T *get_next();
+    LINKED_LIST_NODE_T *get_node_by_index(uint64_t index);
 
     // ========== 纯虚函数 ========== //
     // 由于不同的struct node的结构不同，因此这些函数的具体实现也尽不相同
@@ -144,6 +148,21 @@ LINKED_LIST_NODE_T *LINKED_LIST<LINKED_LIST_NODE_T>::get_next() {
 }
 
 template<typename LINKED_LIST_NODE_T>
+LINKED_LIST_NODE_T *LINKED_LIST<LINKED_LIST_NODE_T>::get_node_by_index(uint64_t index) {
+    // index in [0, count_)
+    if (head_ == nullptr || index >= count_) {
+        return nullptr;
+    }
+
+    LINKED_LIST_NODE_T *p = head_;
+    for (int i = 0; i < index; ++i) {
+        p = get_node_next(p);
+    }
+
+    return p;
+}
+
+template<typename LINKED_LIST_NODE_T>
 void LINKED_LIST<LINKED_LIST_NODE_T>::delete_list() {
     // 在delete中，count_会变化
     // not multi-thread safe
@@ -172,6 +191,7 @@ typedef struct INT_LINKED_LIST_NODE {
 } int_linked_list_node_t;
 
 class INT_LINKED_LIST final : public LINKED_LIST<int_linked_list_node_t>  {
+public:
     // construct function
     INT_LINKED_LIST(int_linked_list_node_t *head, uint64_t count)
         : LINKED_LIST(head, count) {}
