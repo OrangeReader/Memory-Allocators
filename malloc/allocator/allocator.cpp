@@ -161,6 +161,7 @@ uint64_t get_footer(uint64_t vaddr) {
     uint64_t footer_vaddr = header_vaddr + get_block_size(header_vaddr) - 4;
 
     assert(get_first_block() < footer_vaddr && footer_vaddr < get_epilogue());
+    assert(get_first_block() < footer_vaddr && footer_vaddr < get_epilogue());
     return footer_vaddr;
 }
 
@@ -299,7 +300,42 @@ bool is_last_block(uint64_t vaddr) {
 /* ------------------------------------- */
 /*  Free Block as Data Structure         */
 /* ------------------------------------- */
-// TODO: this two function
+uint64_t get_field32_block_ptr(uint64_t header_vaddr, uint32_t min_block_size, uint32_t offset) {
+    if (header_vaddr == NIL) {
+        return NIL;
+    }
+
+    assert(get_first_block() <= header_vaddr && header_vaddr <= get_last_block());
+    assert(header_vaddr % 8 == 4);
+    assert(get_block_size(header_vaddr) >= min_block_size);
+
+    assert(offset % 4 == 0);
+    uint32_t vaddr_32 = *(uint32_t *)&heap[header_vaddr + offset];
+    return (uint64_t)vaddr_32;
+}
+
+bool set_field32_block_ptr(uint64_t header_vaddr, uint64_t block_ptr, uint32_t min_block_size, uint32_t offset) {
+    if (header_vaddr == NIL) {
+        return false;
+    }
+
+    assert(get_first_block() <= header_vaddr && header_vaddr <= get_last_block());
+    assert(header_vaddr % 8 == 4);
+    assert(get_block_size(header_vaddr) >= min_block_size);
+
+    assert(block_ptr == NIL || (get_first_block() <= block_ptr && block_ptr <= get_last_block()));
+    assert(block_ptr == NIL || (block_ptr % 8 == 4));
+    assert(block_ptr == NIL || (get_block_size(block_ptr) >= min_block_size));
+
+    assert(offset % 4 == 0);
+
+    // actually is a 32-bit pointer
+    assert((block_ptr >> 32) == 0);
+    *(uint32_t *)&heap[header_vaddr + offset] = (uint32_t)(block_ptr & 0xFFFFFFFF);
+
+    return true;
+}
+
 
 /* ------------------------------------- */
 /*  Malloc and Free                      */

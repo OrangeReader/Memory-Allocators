@@ -1,4 +1,4 @@
-#include "../../include/allocator.h"
+#include "allocator.h"
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -111,7 +111,7 @@ static int internal_heap_init() {
     // 信号注册，当当前进程接收到SIGABRT信号后调用on_sigabrt函数
     signal(SIGABRT, &on_sigabrt);
 #endif
-    return 0;
+    return 1;
 }
 
 // size - requested payload size

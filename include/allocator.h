@@ -62,11 +62,10 @@ bool is_first_block(uint64_t vaddr);
 
 bool is_last_block(uint64_t vaddr);
 
-// TODO: this two function
 // for free block as data structure
 uint64_t get_field32_block_ptr(uint64_t header_vaddr, uint32_t min_block_size, uint32_t offset);
 
-void set_field32_block_ptr(uint64_t header_vaddr, uint64_t block_ptr, uint32_t min_block_size, uint32_t offset);
+bool set_field32_block_ptr(uint64_t header_vaddr, uint64_t block_ptr, uint32_t min_block_size, uint32_t offset);
 
 // common operations for malloc and free
 uint64_t merge_blocks_as_free(uint64_t low, uint64_t high);

@@ -214,7 +214,13 @@ static void test_get_next_prev() {
 }
 
 static void test_malloc_free() {
+#if defined(IMPLICIT_FREE_LIST)
     printf("Testing implicit list malloc & free ...\n");
+#endif
+
+#if defined(EXPLICIT_FREE_LIST)
+    printf("Testing explicit list malloc & free ...\n");
+#endif
 
     heap_init();
     check_heap_correctness();
@@ -222,7 +228,7 @@ static void test_malloc_free() {
     srand(42);
 
     // collection for the pointers
-    INT_LINKED_LIST *ptrs = new INT_LINKED_LIST(nullptr, 0);
+    INT_LINKED_LIST *ptrs = new INT_LINKED_LIST(NULL_NODE, 0);
 
     for (int i = 0; i < 100000; ++i) {
         uint32_t size = rand() % 1024 + 1; // a non zero value
@@ -230,20 +236,21 @@ static void test_malloc_free() {
         if ((rand() & 0x1) == 0) {
             // malloc, return the payload address
             uint64_t p = mem_alloc(size);
-//          printf("\tmalloc: payload = %lu, size = %u\n", p, size);
+//            printf("\tmalloc: payload = %lu, size = %u\n", p, size);
 
             if (p != 0) {
-                int_linked_list_node_t *temp = new INT_LINKED_LIST_NODE(p);
+                uint64_t temp = (uint64_t)(new INT_LINKED_LIST_NODE(p));
                 ptrs->insert_node(temp);
             }
         } else if (ptrs->count() != 0) {
             // free
             // randomly select one to free
             int random_index = rand() % ptrs->count();
-            int_linked_list_node_t *t = ptrs->get_node_by_index(random_index);
+            uint64_t t = ptrs->get_node_by_index(random_index);
+            uint64_t t_value = ((int_linked_list_node_t *)t)->value;
 
-//          printf("\tfree: payload = %lu\n", t->value);
-            mem_free(t->value);
+//            printf("\tfree: payload = %lu\n", t_value);
+            mem_free(t_value);
 
             ptrs->delete_node(t);
         }
@@ -255,8 +262,10 @@ static void test_malloc_free() {
     // 对剩下的全部进行free
     int num_still_allocated = ptrs->count();
     for (int i = 0; i < num_still_allocated; ++i) {
-        int_linked_list_node_t *t = ptrs->get_next();
-        mem_free(t->value);
+        uint64_t t = ptrs->get_next();
+        uint64_t t_value = ((int_linked_list_node_t *)t)->value;
+
+        mem_free(t_value);
         ptrs->delete_node(t);
     }
     assert(ptrs->count() == 0);
