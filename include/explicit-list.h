@@ -11,14 +11,22 @@ class EXPLICIT_FREE_LINKED_LIST final : public LINKED_LIST  {
 public:
     // construct function
     EXPLICIT_FREE_LINKED_LIST(uint64_t head, uint64_t count)
-            : LINKED_LIST(head, count) {}
+        : head_(head), count_(count) {}
 
     // 派生类中没有自己的成员变量需要被管理，因此设置为default即可
     // 然后调用父类的析构函数释放相关内存
-    ~EXPLICIT_FREE_LINKED_LIST() final = default;
+    ~EXPLICIT_FREE_LINKED_LIST() override {
+        delete_list();
+    };
 
 protected:
     // EXPLICIT_FREE_LINKED_LIST中需要override的函数
+    uint64_t get_head() const override;
+    bool set_head(uint64_t new_head) override;
+
+    uint64_t get_count() const override;
+    bool set_count(uint64_t new_count) override;
+
     bool destruct_node(uint64_t node) override;
 
     bool is_nodes_equal(uint64_t first, uint64_t second) override;
@@ -28,6 +36,12 @@ protected:
 
     uint64_t get_node_next(uint64_t header_vaddr) override;
     bool set_node_next(uint64_t header_vaddr, uint64_t next_vaddr) override;
+
+private:
+    void delete_list();
+
+    uint64_t head_ = 0;
+    uint64_t count_ = 0;
 };
 
 #endif //MYMALLOC_EXPLICIT_LIST_H

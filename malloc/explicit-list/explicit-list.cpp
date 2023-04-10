@@ -55,6 +55,24 @@ const uint32_t MIN_EXPLICIT_FREE_LIST_BLOCKSIZE = 16;
 /* ------------------------------------- */
 /*  Operations for List Block Structure  */
 /* ------------------------------------- */
+uint64_t EXPLICIT_FREE_LINKED_LIST::get_head() const {
+    return head_;
+}
+
+bool EXPLICIT_FREE_LINKED_LIST::set_head(uint64_t new_head) {
+    head_ = new_head;
+    return true;
+}
+
+uint64_t EXPLICIT_FREE_LINKED_LIST::get_count() const {
+    return count_;
+}
+
+bool EXPLICIT_FREE_LINKED_LIST::set_count(uint64_t new_count) {
+    count_ = new_count;
+    return true;
+}
+
 bool EXPLICIT_FREE_LINKED_LIST::destruct_node(uint64_t node) {
     // 没有额外分配内存，通过数组模拟链表，因此无需销毁
     return true;
@@ -87,6 +105,16 @@ uint64_t EXPLICIT_FREE_LINKED_LIST::get_node_next(uint64_t header_vaddr) {
 
 bool EXPLICIT_FREE_LINKED_LIST::set_node_next(uint64_t header_vaddr, uint64_t next_vaddr) {
     return set_field32_block_ptr(header_vaddr, next_vaddr, MIN_EXPLICIT_FREE_LIST_BLOCKSIZE, 8);
+}
+
+void EXPLICIT_FREE_LINKED_LIST::delete_list() {
+    // 在delete中，count_会变化
+    // not multi-thread safe
+    int count_copy = count();
+    for (int i = 0; i < count_copy; ++i) {
+        uint64_t temp = get_next();
+        delete_node(temp);
+    }
 }
 
 // The explicit free linked list
