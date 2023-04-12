@@ -6,16 +6,29 @@ set(CMAKE_CXX_STANDARD 11)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_subdirectory(algorithm)
-add_subdirectory(malloc)
+#add_subdirectory(malloc)
 
-add_definitions(-DDEBUG_MALLOC)
-
-add_executable(MyMalloc test-malloc.cpp)
+# ==================================== #
+#           for test malloc            #
+# ==================================== #
+#add_definitions(-DDEBUG_MALLOC)
+#
+#add_executable(test-malloc test-malloc.cpp)
 
 # 采用implicit-list 实现的 allocator
 #add_definitions(-DIMPLICIT_FREE_LIST)
-#target_link_libraries(MyMalloc PRIVATE allocator implicit-list linked-list)
+#target_link_libraries(test-malloc PRIVATE allocator implicit-list linked-list)
 
 # 采用explicit-list 实现的 allocator
-add_definitions(-DEXPLICIT_FREE_LIST)
-target_link_libraries(MyMalloc PRIVATE allocator explicit-list linked-list)
+#add_definitions(-DEXPLICIT_FREE_LIST)
+#target_link_libraries(test-malloc PRIVATE allocator explicit-list linked-list)
+
+# 采用red black tree 实现的 allocator
+#add_definitions(-DEXPLICIT_FREE_LIST)
+#target_link_libraries(test-malloc PRIVATE allocator redblack-tree rbt)
+
+# ==================================== #
+#           for test rbt               #
+# ==================================== #
+add_executable(test-rbt test-rbt.cpp)
+target_link_libraries(test-rbt PRIVATE rbt utils)

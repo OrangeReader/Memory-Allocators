@@ -2,6 +2,7 @@ add_subdirectory(allocator)
 
 add_subdirectory(implicit-list)
 add_subdirectory(explicit-list)
+add_subdirectory(redblack-tree)
 
 ## 设置静态库a的路径和名称
 #set(LIB_A_PATH ${CMAKE_CURRENT_SOURCE_DIR}/allocator)

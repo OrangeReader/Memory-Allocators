@@ -1,5 +1,8 @@
 #include <cassert>
+#include <cstring>
+#include <cstdio>
 #include "rbt.h"
+#include "utils.h"
 
 void RBT::insert_node(uint64_t node) {
     assert(is_null_node(node) == false);
@@ -161,17 +164,45 @@ void RBT::delete_node(uint64_t node) {
 
 }
 
-// TODO: compare tree
-bool RBT::tree_compare(uint64_t lhs, uint64_t rhs) {
+bool rbt_compare(uint64_t lhs, uint64_t rhs, const RBT *rbt) {
+    bool is_lhs_null = rbt->is_null_node(lhs);
+    bool is_rhs_null = rbt->is_null_node(rhs);
 
+    if (is_lhs_null && is_rhs_null) {
+        return true;
+    }
+
+    if (is_lhs_null || is_rhs_null) {
+        return false;
+    }
+
+    // both not NULL
+    if (rbt->get_key(lhs) == rbt->get_key(rhs)) {
+        uint64_t lhs_parent = rbt->get_parent(lhs);
+        uint64_t rhs_parent = rbt->get_parent(rhs);
+
+        bool is_lhs_parent_null = rbt->is_null_node(lhs_parent);
+        bool is_rhs_parent_null = rbt->is_null_node(rhs_parent);
+        if (is_lhs_parent_null != is_rhs_parent_null) {
+            return false;
+        }
+
+        if (is_lhs_parent_null == false) {
+            if (rbt->get_key(lhs_parent) != rbt->get_key(rhs_parent)) {
+                return false;
+            }
+        }
+    }
+
+    if (rbt->get_color(lhs) == rbt->get_color(rhs)) {
+        return rbt_compare(rbt->get_left_child(lhs), rbt->get_left_child(rhs), rbt) &&
+            rbt_compare(rbt->get_right_child(lhs), rbt->get_right_child(rhs), rbt);
+    }
+
+    return false;
 }
 
-// TODO: verify the rbt all right
-bool RBT::rbt_verify() {
-
-}
-
-bool RBT::is_null_node(uint64_t node) {
+bool RBT::is_null_node(uint64_t node) const {
     if (node == NULL_NODE) {
         return true;
     }
@@ -525,9 +556,42 @@ void RBT::rbt_get_psnf(uint64_t db, uint64_t &parent, uint64_t &sibling, uint64_
 /*======================================*/
 /*      Default Implementation          */
 /*======================================*/
-// TODO: construct tree by key string
-RBT_INT::RBT_INT(char *tree, char *color) {
+RBT_INT::RBT_INT(const char *tree, const char *color) {
+    bst_construct_key_str(tree);
 
+    // 空rbt，无需后续的染色
+    if (is_nodes_equal(root_, NULL_NODE)) {
+        return;
+    }
+
+    // root is not NULL
+    // color the red-black tree
+    int index = color_rbt_dfs(root_, color, 0);
+    assert(index == strlen(color) - 1);
+}
+
+RBT_INT::RBT_INT(const RBT_INT &rhs) {
+    // 遍历rbt，深拷贝一份
+}
+
+RBT_INT &RBT_INT::operator=(const RBT_INT &rhs) {
+    // 遍历rbt，深拷贝一份
+    return *this;
+}
+
+RBT_INT::RBT_INT(RBT_INT &&rhs) {
+    root_ = rhs.get_root();
+
+    // 记得将原有的root设置为空，否则会将rbt给析构掉
+    rhs.set_root(NULL_NODE);
+}
+
+RBT_INT &RBT_INT::operator=(RBT_INT &&rhs) {
+    root_ = rhs.get_root();
+
+    // 记得将原有的root设置为空，否则会将rbt给析构掉
+    rhs.set_root(NULL_NODE);
+    return *this;
 }
 
 uint64_t RBT_INT::get_root() const {
@@ -537,6 +601,12 @@ uint64_t RBT_INT::get_root() const {
 bool RBT_INT::set_root(uint64_t new_root) {
     root_ = new_root;
     return true;
+}
+
+// for construct by str function
+uint64_t RBT_INT::construct_node() {
+    rbt_node_t *node = new RBT_INT_NODE();
+    return (uint64_t)node;
 }
 
 bool RBT_INT::destruct_node(uint64_t node) {
@@ -554,7 +624,7 @@ bool RBT_INT::is_nodes_equal(uint64_t first, uint64_t second) {
     return first == second;
 }
 
-uint64_t RBT_INT::get_parent(uint64_t node) {
+uint64_t RBT_INT::get_parent(uint64_t node) const {
     if (is_null_node(node)) {
         return NULL_NODE;
     }
@@ -571,7 +641,7 @@ bool RBT_INT::set_parent(uint64_t node, uintptr_t parent) {
     return true;
 }
 
-uint64_t RBT_INT::get_left_child(uint64_t node) {
+uint64_t RBT_INT::get_left_child(uint64_t node) const {
     if (is_null_node(node)) {
         return NULL_NODE;
     }
@@ -588,7 +658,7 @@ bool RBT_INT::set_left_child(uint64_t node, uint64_t left_child) {
     return true;
 }
 
-uint64_t RBT_INT::get_right_child(uint64_t node) {
+uint64_t RBT_INT::get_right_child(uint64_t node) const {
     if (is_null_node(node)) {
         return NULL_NODE;
     }
@@ -605,8 +675,11 @@ bool RBT_INT::set_right_child(uint64_t node, uint64_t right_child) {
     return true;
 }
 
-rbt_color_t RBT_INT::get_color(uint64_t node) {
-    // 确保传入的node为非空节点
+rbt_color_t RBT_INT::get_color(uint64_t node) const {
+    if (is_null_node(node)) {
+        // 对于空节点返回黑色
+        return COLOR_BLACK;
+    }
     return ((rbt_node_t *)node)->color;
 }
 
@@ -619,7 +692,7 @@ bool RBT_INT::set_color(uint64_t node, rbt_color_t color) {
     return true;
 }
 
-uint64_t RBT_INT::get_key(uint64_t node) {
+uint64_t RBT_INT::get_key(uint64_t node) const {
     if (is_null_node(node)) {
         return NULL_NODE;
     }
@@ -636,7 +709,7 @@ bool RBT_INT::set_key(uint64_t node, uint64_t key) {
     return true;
 }
 
-uint64_t RBT_INT::get_value(uint64_t node) {
+uint64_t RBT_INT::get_value(uint64_t node) const {
     if (is_null_node(node)) {
         return NULL_NODE;
     }
@@ -652,6 +725,144 @@ bool RBT_INT::set_value(uint64_t node, uint64_t value) {
     ((rbt_node_t *)node)->value = value;
     return true;
 }
+
+// the format of string str:
+// 1. NULL node - `#`
+// 2. (root node key, left tree key, right tree key)
+void RBT_INT::bst_construct_key_str(const char *str) {
+    // 接下来使用栈(使用数组+top指针模拟)来处理节点，从而完成bst的构造
+    // ⭐ a node on STACK, a LOCAL variable!(处于栈中的节点，说明其还未处理完)
+    // this is the sentinel to mark the unprocessed subtree
+    // ==> this node_id is different from NULL_ID, and should be different from all possibilities from node constructor
+
+    const uint64_t todo = 1;    // 表示该subtree还没构造完全
+
+    // pointer stack (at most 1K nodes) for node ids
+    uint64_t stack[1000];
+    int top = -1;
+
+    int i = 0;
+    while (i < strlen(str)) {
+        if (str[i] == '(') {
+            // push the node as being processed
+            ++top;
+
+            uint64_t x = construct_node();
+            set_parent(x, NULL_NODE);
+            set_left_child(x, todo);
+            set_right_child(x, todo);
+
+            // scan the value
+            // (value,
+            int j = i + 1;
+            while ('0' <= str[j] && str[j] <= '9') {
+                ++j;
+            }
+            set_key(x, string2uint_range(str, i + 1, j - 1));
+
+            // push to stack
+            stack[top] = x;
+
+            // move to next node
+            i = j + 1;  // 越过`,`
+            continue;
+        } else if (str[i] == ')') {
+            // 说明当前的左右子树构造完成
+            // pop the being processed node
+            if (top == 0) {
+                // pop root
+                uint64_t root = stack[0];
+                uint64_t root_left = get_left_child(root);
+                uint64_t root_right = get_right_child(root);
+
+                assert(is_nodes_equal(root_left, todo) == false);
+                assert(is_nodes_equal(root_right, todo) == false);
+
+                set_root(root);
+                return;
+            }
+
+            // pop a non-root node
+            uint64_t p = stack[top - 1];    // the parent of top
+            uint64_t t = stack[top];        // the poped top - can be left or right child of parent
+
+            // when pop top, its left & right subtree are all reduced(该节点的左右子树已经规约好了)
+            assert(is_nodes_equal(get_left_child(t), todo) == false &&
+                   is_nodes_equal(get_right_child(t), todo) == false);
+
+            --top;
+
+            // pop this node
+            uint64_t p_left = get_left_child(p);
+            uint64_t p_right = get_right_child(p);
+
+            if (is_nodes_equal(p_left, todo)) {
+                // left child of parent not yet processed
+                bst_set_child(p, t, LEFT_CHILD);
+                ++i;
+                continue;
+            } else if (is_nodes_equal(p_right, todo)) {
+                // right child of parent not yet processed
+                bst_set_child(p, t, RIGHT_CHILD);
+                ++i;
+                continue;
+            }
+            printf("node %lx:%lx is not having any unprocessed sub-tree\n  while %lx:%lx is redblack into it.\n",
+                   p, get_key(p), t, get_key(t));
+            assert(false);
+        } else if (str[i] == '#') {
+            if (top < 0) {
+                // 一个空rbt
+                assert(strlen(str) == 1);
+                return;
+            }
+
+            uint64_t t = stack[top];    // pop 就是这个空节点的父节点
+
+            // push NULL node
+            // pop NULL node
+            if (is_nodes_equal(get_left_child(t), todo)) {
+                // left child of parent not yet processed
+                bst_set_child(t, NULL_NODE, LEFT_CHILD);
+                ++i;
+                continue;
+            } else if (is_nodes_equal(get_right_child(t), todo)) {
+                // right child of parent not yet processed
+                bst_set_child(t, NULL_NODE, RIGHT_CHILD);
+                ++i;
+                continue;
+            }
+            printf("node %lx:(%lx) is not having any unprocessed sub-tree\n  while NULL is redblack into it.\n",
+                   t, get_key(t));
+            assert(false);
+        } else {
+            // space, comma, new line
+            ++i;
+            continue;
+        }
+    }
+}
+
+uint64_t RBT_INT::color_rbt_dfs(uint64_t node, const char *color, int index) {
+    if (is_null_node(node)) {
+        assert(color[index] == '#');
+        return index;
+    }
+
+    if (color[index] == 'R') {
+        set_color(node, COLOR_RED);
+    } else if (color[index] == 'B') {
+        set_color(node, COLOR_BLACK);
+    }
+
+    // 获取当前已经处理到color的index
+    index = color_rbt_dfs(get_left_child(node), color, index + 1);
+    // 遍历右子树，返回的是color的最后一位的index
+    index = color_rbt_dfs(get_right_child(node), color, index + 1);
+
+    return index;
+}
+
 
 // for destruct function
 void RBT_INT::delete_rbt() {
