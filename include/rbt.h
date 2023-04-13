@@ -19,11 +19,11 @@ typedef enum {
 } child_t;
 
 class RBT;
-bool rbt_compare(uint64_t lhs, uint64_t rhs, const RBT *rbt);
+bool rbt_compare(uint64_t lhs, uint64_t rhs, const std::shared_ptr<RBT> rbt);
 
 // 基类的公有函数调用私有函数，再其派生类中该公用函数可以正常使用，无需重新定义相应的私有函数
 class RBT {
-    friend bool rbt_compare(uint64_t lhs, uint64_t rhs, const RBT *rbt);
+    friend bool rbt_compare(uint64_t lhs, uint64_t rhs, const std::shared_ptr<RBT> rbt);
 public:
     // ========== 拷贝控制 ========== //
     RBT() = default;
@@ -40,9 +40,14 @@ public:
     void insert_node(uint64_t node);
     void delete_node(uint64_t node);
 
+    uint64_t rbt_find(uint64_t key);
+
+//    only for rotation uint test, this function should be private
+//    uint64_t rbt_rotate(uint64_t node, uint64_t parent, uint64_t grandparent);
+
 protected:
     // return true if node is null
-    bool is_null_node(uint64_t node) const;
+    static bool is_null_node(uint64_t node);
 
     // ========== 纯虚函数 ========== //
     // 由于不同的struct node的结构不同，因此这些函数的具体实现也尽不相同
@@ -133,6 +138,10 @@ public:
         : root_(root) {}
 
     RBT_INT(const char *tree, const char *color);
+
+//    only for test rotation, construct a bst
+//    this not a correct rbt construct function
+//    RBT_INT(const char *tree);
 
     // 拷贝构造函数
     RBT_INT(const RBT_INT &);

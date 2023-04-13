@@ -1,8 +1,48 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
+#include <memory>
+
 #include "rbt.h"
 #include "utils.h"
+
+bool rbt_compare(uint64_t lhs, uint64_t rhs, std::shared_ptr<RBT> rbt) {
+    bool is_lhs_null = rbt->is_null_node(lhs);
+    bool is_rhs_null = rbt->is_null_node(rhs);
+
+    if (is_lhs_null && is_rhs_null) {
+        return true;
+    }
+
+    if (is_lhs_null || is_rhs_null) {
+        return false;
+    }
+
+    // both not NULL
+    if (rbt->get_key(lhs) == rbt->get_key(rhs)) {
+        uint64_t lhs_parent = rbt->get_parent(lhs);
+        uint64_t rhs_parent = rbt->get_parent(rhs);
+
+        bool is_lhs_parent_null = rbt->is_null_node(lhs_parent);
+        bool is_rhs_parent_null = rbt->is_null_node(rhs_parent);
+        if (is_lhs_parent_null != is_rhs_parent_null) {
+            return false;
+        }
+
+        if (!is_lhs_parent_null) {
+            if (rbt->get_key(lhs_parent) != rbt->get_key(rhs_parent)) {
+                return false;
+            }
+        }
+    }
+
+    if (rbt->get_color(lhs) == rbt->get_color(rhs)) {
+        return rbt_compare(rbt->get_left_child(lhs), rbt->get_left_child(rhs), rbt) &&
+               rbt_compare(rbt->get_right_child(lhs), rbt->get_right_child(rhs), rbt);
+    }
+
+    return false;
+}
 
 void RBT::insert_node(uint64_t node) {
     assert(is_null_node(node) == false);
@@ -87,7 +127,7 @@ void RBT::delete_node(uint64_t node) {
     // after: parent can't be null, db can be null
 
     // re-balance the double black node
-    while (is_nodes_equal(db, get_root())) {
+    while (!is_nodes_equal(db, get_root())) {
         // to start up, db = NULL, p is effective
         // so the calculation will be on p instead of db
         rbt_get_psnf(db, parent, sibling, near, far);
@@ -116,7 +156,7 @@ void RBT::delete_node(uint64_t node) {
                 // only sibling is the red node
                 rbt_rotate(far, sibling, parent);
 
-                // 抱持黑高不变，交换sibling和parent的color
+                // 保持黑高不变，交换sibling和parent的color
                 set_color(sibling, COLOR_BLACK);
                 set_color(parent, COLOR_RED);
                 // db is not changing, it can still be null
@@ -133,12 +173,12 @@ void RBT::delete_node(uint64_t node) {
             case 0X5:
             case 0XC:
             case 0XD:
-                // near is the red node(far adn parent may be red)
+                // near is the red node(far and parent may be red)
                 // 将near节点旋转作为根节点
                 rbt_rotate(near, sibling, parent);
 
                 // 为了将修改影响局限于当前子树，则交换near和parent的color，对上层不产生影响
-                set_color(sibling, parent_color);
+                set_color(near, parent_color);
                 // 将双黑节点中一个黑色信息转移至parent(与near交换后是red color), 结束
                 set_color(parent, COLOR_BLACK);
                 break;
@@ -161,48 +201,32 @@ void RBT::delete_node(uint64_t node) {
         // 走到这说明db节点已经处理完毕
         break;
     }
-
+    // double black node is root, we do not need to process
 }
 
-bool rbt_compare(uint64_t lhs, uint64_t rhs, const RBT *rbt) {
-    bool is_lhs_null = rbt->is_null_node(lhs);
-    bool is_rhs_null = rbt->is_null_node(rhs);
-
-    if (is_lhs_null && is_rhs_null) {
-        return true;
+uint64_t RBT::rbt_find(uint64_t key) {
+    uint64_t root = get_root();
+    if (is_null_node(root)) {
+        return NULL_NODE;
     }
 
-    if (is_lhs_null || is_rhs_null) {
-        return false;
-    }
+    while (!is_null_node(root)) {
+        uint64_t root_key = get_key(root);
 
-    // both not NULL
-    if (rbt->get_key(lhs) == rbt->get_key(rhs)) {
-        uint64_t lhs_parent = rbt->get_parent(lhs);
-        uint64_t rhs_parent = rbt->get_parent(rhs);
-
-        bool is_lhs_parent_null = rbt->is_null_node(lhs_parent);
-        bool is_rhs_parent_null = rbt->is_null_node(rhs_parent);
-        if (is_lhs_parent_null != is_rhs_parent_null) {
-            return false;
-        }
-
-        if (is_lhs_parent_null == false) {
-            if (rbt->get_key(lhs_parent) != rbt->get_key(rhs_parent)) {
-                return false;
-            }
+        if (key == root_key) {
+            // return the first found key
+            return root;
+        } else if (key < root_key) {
+            root = get_left_child(root);
+        } else {
+            root = get_right_child(root);
         }
     }
 
-    if (rbt->get_color(lhs) == rbt->get_color(rhs)) {
-        return rbt_compare(rbt->get_left_child(lhs), rbt->get_left_child(rhs), rbt) &&
-            rbt_compare(rbt->get_right_child(lhs), rbt->get_right_child(rhs), rbt);
-    }
-
-    return false;
+    return NULL_NODE;
 }
 
-bool RBT::is_null_node(uint64_t node) const {
+bool RBT::is_null_node(uint64_t node) {
     if (node == NULL_NODE) {
         return true;
     }
@@ -236,7 +260,7 @@ bool RBT::bst_set_child(uint64_t parent, uint64_t child, child_t direction) {
 // ⭐ 此时victim类似于删除，后续如何处理交由后续程序处理
 void RBT::bst_replace(uint64_t victim, uint64_t node) {
     assert(is_null_node(victim) == false);
-    assert(is_null_node(node) == false);
+    assert(is_null_node(get_root()) == false);
 
     uint64_t v_parent = get_parent(victim);
     if (is_nodes_equal(victim, get_root())) {
@@ -540,7 +564,7 @@ void RBT::rbt_get_psnf(uint64_t db, uint64_t &parent, uint64_t &sibling, uint64_
 
     uint64_t sibling_left = get_left_child(sibling);
     uint64_t sibling_right = get_right_child(sibling);
-    if (db4parent) {
+    if (db4parent == LEFT_CHILD) {
         // (p, db, (s, n, f))
         near = sibling_left;
         far = sibling_right;
@@ -569,6 +593,10 @@ RBT_INT::RBT_INT(const char *tree, const char *color) {
     int index = color_rbt_dfs(root_, color, 0);
     assert(index == strlen(color) - 1);
 }
+
+//RBT_INT::RBT_INT(const char *tree) {
+//    bst_construct_key_str(tree);
+//}
 
 RBT_INT::RBT_INT(const RBT_INT &rhs) {
     // 遍历rbt，深拷贝一份
