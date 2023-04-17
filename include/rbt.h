@@ -47,7 +47,7 @@ public:
 
 protected:
     // return true if node is null
-    static bool is_null_node(uint64_t node);
+    virtual bool is_null_node(uint64_t node) const = 0;
 
     // ========== 纯虚函数 ========== //
     // 由于不同的struct node的结构不同，因此这些函数的具体实现也尽不相同
@@ -161,10 +161,12 @@ public:
     uint64_t get_root() const override;
 
 protected:
+    bool is_null_node(uint64_t header_vaddr) const override;
+
     bool set_root(uint64_t new_root) override;
 
     uint64_t construct_node() override;
-    bool destruct_node(uint64_t node) override;
+    bool destruct_node(uint64_t header_vaddr) override;
 
     bool is_nodes_equal(uint64_t first, uint64_t second) override;
 

@@ -226,14 +226,6 @@ uint64_t RBT::rbt_find(uint64_t key) {
     return NULL_NODE;
 }
 
-bool RBT::is_null_node(uint64_t node) {
-    if (node == NULL_NODE) {
-        return true;
-    }
-
-    return false;
-}
-
 bool RBT::bst_set_child(uint64_t parent, uint64_t child, child_t direction) {
     switch (direction) {
         case LEFT_CHILD:
@@ -624,6 +616,14 @@ RBT_INT &RBT_INT::operator=(RBT_INT &&rhs) {
 
 uint64_t RBT_INT::get_root() const {
     return root_;
+}
+
+bool RBT_INT::is_null_node(uint64_t node) const {
+    if (node == NULL_NODE) {
+        return true;
+    }
+
+    return false;
 }
 
 bool RBT_INT::set_root(uint64_t new_root) {

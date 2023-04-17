@@ -32,39 +32,30 @@ uint64_t round_up(uint64_t x, uint64_t n);
 
 // operations for all blocks
 uint32_t get_block_size(uint64_t header_vaddr);
-
 void set_block_size(uint64_t header_vaddr, uint32_t blocksize);
 
 uint32_t get_allocated(uint64_t header_vaddr);
-
 void set_allocated(uint64_t header_vaddr, uint32_t allocated);
 
 uint64_t get_payload(uint64_t vaddr);
-
 uint64_t get_header(uint64_t vaddr);
-
 uint64_t get_footer(uint64_t vaddr);
 
 // operations for heap linked list
 uint64_t get_next_header(uint64_t vaddr);
-
 uint64_t get_prev_header(uint64_t vaddr);
 
 uint64_t get_prologue();
-
 uint64_t get_epilogue();
 
 uint64_t get_first_block();
-
 uint64_t get_last_block();
 
 bool is_first_block(uint64_t vaddr);
-
 bool is_last_block(uint64_t vaddr);
 
 // for free block as data structure
 uint64_t get_field32_block_ptr(uint64_t header_vaddr, uint32_t min_block_size, uint32_t offset);
-
 bool set_field32_block_ptr(uint64_t header_vaddr, uint64_t block_ptr, uint32_t min_block_size, uint32_t offset);
 
 // common operations for malloc and free

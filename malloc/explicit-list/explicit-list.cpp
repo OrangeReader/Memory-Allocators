@@ -107,16 +107,6 @@ bool EXPLICIT_FREE_LINKED_LIST::set_node_next(uint64_t header_vaddr, uint64_t ne
     return set_field32_block_ptr(header_vaddr, next_vaddr, MIN_EXPLICIT_FREE_LIST_BLOCKSIZE, 8);
 }
 
-void EXPLICIT_FREE_LINKED_LIST::delete_list() {
-    // 在delete中，count_会变化
-    // not multi-thread safe
-    int count_copy = count();
-    for (int i = 0; i < count_copy; ++i) {
-        uint64_t temp = get_next();
-        delete_node(temp);
-    }
-}
-
 // The explicit free linked list
 static EXPLICIT_FREE_LINKED_LIST *explicit_list = nullptr;
 
@@ -239,6 +229,9 @@ static uint64_t internal_malloc(uint32_t size) {
 
     uint64_t payload_vaddr = NIL;
     uint32_t request_block_size = round_up(size, 8) + 4 + 4;
+    // 虽说根据已分配的结构来说，是不需要 >= MIN_EXPLICIT_FREE_LIST_BLOCKSIZE
+    // ⭐ 但是如果释放掉，则无法管理起来，因此当申请的空间小于MIN_EXPLICIT_FREE_LIST_BLOCKSIZE，则需要将其提升到MIN_EXPLICIT_FREE_LIST_BLOCKSIZE
+    request_block_size = request_block_size >= MIN_EXPLICIT_FREE_LIST_BLOCKSIZE ? request_block_size : MIN_EXPLICIT_FREE_LIST_BLOCKSIZE;
 
     uint64_t b = explicit_list->get_next();
 

@@ -4,7 +4,7 @@
 #include "linked-list.h"
 
 // ================================================ //
-//   The implementation of the default linked list  //
+//   The implementation of the explict linked list  //
 // ================================================ //
 // 我们采用数组模拟heap，数组的index就是virtual address，从而直接定位到相应的块
 class EXPLICIT_FREE_LINKED_LIST final : public LINKED_LIST  {
@@ -13,11 +13,9 @@ public:
     EXPLICIT_FREE_LINKED_LIST(uint64_t head, uint64_t count)
         : head_(head), count_(count) {}
 
-    // 派生类中没有自己的成员变量需要被管理，因此设置为default即可
-    // 然后调用父类的析构函数释放相关内存
-    ~EXPLICIT_FREE_LINKED_LIST() override {
-        delete_list();
-    };
+    // 由于heap上的空闲块，如果全部释放掉那么就变成了隐式空闲链表
+    // 但是EXPLICIT FREE BLOCK 兼容 隐式空闲块
+    ~EXPLICIT_FREE_LINKED_LIST() override = default;
 
 protected:
     // EXPLICIT_FREE_LINKED_LIST中需要override的函数
@@ -38,9 +36,7 @@ protected:
     bool set_node_next(uint64_t header_vaddr, uint64_t next_vaddr) override;
 
 private:
-    void delete_list();
-
-    uint64_t head_ = 0;
+    uint64_t head_ = NIL;
     uint64_t count_ = 0;
 };
 
