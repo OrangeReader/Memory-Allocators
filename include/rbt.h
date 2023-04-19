@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-const uint64_t NULL_NODE = 0;
+const uint64_t NULL_TREE_NODE = 0;
 
 // 如果使用using在GCC下会出现错误
 // 1. [Error defining an unnamed structure in c++](https://stackoverflow.com/questions/66966426/error-defining-an-unnamed-structure-in-c)
@@ -39,6 +39,18 @@ public:
 
     void insert_node(uint64_t node);
     void delete_node(uint64_t node);
+
+    uint64_t get_node_key(uint64_t node) const {
+        return get_key(node);
+    }
+
+    uint64_t get_node_left(uint64_t node) const {
+        return get_left_child(node);
+    }
+
+    uint64_t get_node_right(uint64_t node) const {
+        return get_right_child(node);
+    }
 
     uint64_t rbt_find(uint64_t key);
 
@@ -196,7 +208,7 @@ private:
     // 删除以root为根的rb-tree
     void delete_rbt(uint64_t root);
 
-    uint64_t root_ = NULL_NODE;
+    uint64_t root_ = NULL_TREE_NODE;
 };
 
 #endif //MYMALLOC_RBT_H

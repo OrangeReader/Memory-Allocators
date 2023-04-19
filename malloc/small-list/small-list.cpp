@@ -90,7 +90,7 @@ bool SMALL_FREE_LINKED_LIST::set_node_next(uint64_t node, uint64_t next) {
 std::shared_ptr<SMALL_FREE_LINKED_LIST> small_list;
 
 void small_list_init() {
-    small_list.reset(new SMALL_FREE_LINKED_LIST(NULL_NODE, 0));
+    small_list.reset(new SMALL_FREE_LINKED_LIST(NULL_LIST_NODE, 0));
 }
 
 void small_list_insert(uint64_t free_header) {

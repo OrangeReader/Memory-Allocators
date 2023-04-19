@@ -15,7 +15,7 @@
 //    node_ptr是一个指针，其实际上是一个uint64_t的value，表示节点的地址
 //    uint64_t node = (uint64_t)node_ptr;
 // 但是不可以对 `(uint64_t)node_ptr`赋值，需要 `*(uint64_t *)&node_ptr` 这样赋值
-const int NULL_NODE = 0;
+const int NULL_LIST_NODE = 0;
 
 class LINKED_LIST {
 public:

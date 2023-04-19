@@ -49,9 +49,9 @@ void RBT::insert_node(uint64_t node) {
 
     // set the inserted node as red node
     set_color(node, COLOR_RED);
-    set_parent(node, NULL_NODE);
-    set_left_child(node, NULL_NODE);
-    set_right_child(node, NULL_NODE);
+    set_parent(node, NULL_TREE_NODE);
+    set_left_child(node, NULL_TREE_NODE);
+    set_right_child(node, NULL_TREE_NODE);
 
     // ⭐ 先当作bst进行插入，然后再调整，保证黑色完美平衡
     // ⭐ if tree is empty, x would be inserted as BLACK node
@@ -64,7 +64,8 @@ void RBT::insert_node(uint64_t node) {
 
         uint64_t node_parent = get_parent(cur_node);
         if (is_null_node(node_parent)) {
-            // ⭐ end of floating up: ① RED NODE floating up to root, let root color as BLACK ==> BLACK height + 1
+            // when rbt is empty and insert node is root
+            // <==> ⭐ end of floating up: ① RED NODE floating up to root, let root color as BLACK ==> BLACK height + 1
             set_color(cur_node, COLOR_BLACK);
             return ;
         } else {
@@ -109,11 +110,11 @@ void RBT::insert_node(uint64_t node) {
 }
 
 void RBT::delete_node(uint64_t node) {
-    uint64_t db = NULL_NODE;
-    uint64_t parent = NULL_NODE;
-    uint64_t sibling = NULL_NODE;
-    uint64_t near = NULL_NODE;
-    uint64_t far = NULL_NODE;
+    uint64_t db = NULL_TREE_NODE;
+    uint64_t parent = NULL_TREE_NODE;
+    uint64_t sibling = NULL_TREE_NODE;
+    uint64_t near = NULL_TREE_NODE;
+    uint64_t far = NULL_TREE_NODE;
 
     rbt_delete_node_only(node, parent);
 
@@ -207,7 +208,7 @@ void RBT::delete_node(uint64_t node) {
 uint64_t RBT::rbt_find(uint64_t key) {
     uint64_t root = get_root();
     if (is_null_node(root)) {
-        return NULL_NODE;
+        return NULL_TREE_NODE;
     }
 
     while (!is_null_node(root)) {
@@ -223,7 +224,7 @@ uint64_t RBT::rbt_find(uint64_t key) {
         }
     }
 
-    return NULL_NODE;
+    return NULL_TREE_NODE;
 }
 
 bool RBT::bst_set_child(uint64_t parent, uint64_t child, child_t direction) {
@@ -260,7 +261,7 @@ void RBT::bst_replace(uint64_t victim, uint64_t node) {
         assert(is_null_node(v_parent));
 
         set_root(node);
-        set_parent(node, NULL_NODE);
+        set_parent(node, NULL_TREE_NODE);
         return;
     } else {
         // victim has parent
@@ -283,9 +284,9 @@ void RBT::bst_insert_node(uint64_t node) {
     uint64_t root = get_root();
     if (is_null_node(root)) {
         // tree is empty: let node as root
-        set_parent(node, NULL_NODE);
-        set_left_child(node, NULL_NODE);
-        set_right_child(node, NULL_NODE);
+        set_parent(node, NULL_TREE_NODE);
+        set_left_child(node, NULL_TREE_NODE);
+        set_right_child(node, NULL_TREE_NODE);
         // rbt only
         set_color(node, COLOR_BLACK);
 
@@ -391,7 +392,7 @@ uint64_t RBT::rbt_rotate(uint64_t node, uint64_t parent, uint64_t grandparent) {
 
 // 基本类似于bst的delete node，只是增加了考虑到双黑节点的处理
 void RBT::rbt_delete_node_only(uint64_t node, uint64_t &db_parent) {
-    db_parent = NULL_NODE;
+    db_parent = NULL_TREE_NODE;
 
     if (is_null_node(get_root())) {
         // nothing to delete
@@ -420,7 +421,7 @@ void RBT::rbt_delete_node_only(uint64_t node, uint64_t &db_parent) {
             db_parent = get_parent(node);
         }
 
-        bst_replace(node, NULL_NODE);
+        bst_replace(node, NULL_TREE_NODE);
         destruct_node(node);
         return;
     } else if (is_node_left_null || is_node_right_null) {
@@ -430,7 +431,7 @@ void RBT::rbt_delete_node_only(uint64_t node, uint64_t &db_parent) {
         assert(get_color(node) == COLOR_BLACK);
 
         // the only non-null subtree: 其一定是红色节点(高度为1，但又非空)
-        uint64_t red_child = NULL_NODE;
+        uint64_t red_child = NULL_TREE_NODE;
         if (is_node_left_null) {
             red_child = node_right;
         } else if (is_node_right_null) {
@@ -453,7 +454,7 @@ void RBT::rbt_delete_node_only(uint64_t node, uint64_t &db_parent) {
         uint64_t node_right_left = get_left_child(node_right);
         bool is_node_right_left_null = is_null_node(node_right_left);
 
-        uint64_t s = NULL_NODE;
+        uint64_t s = NULL_TREE_NODE;
         // swap the node and successor
         if (is_node_right_left_null) {
             // case 3.1: node->right is the successor
@@ -462,7 +463,7 @@ void RBT::rbt_delete_node_only(uint64_t node, uint64_t &db_parent) {
 
             // 进行swap, 但 color 不变
             bst_set_child(node, get_right_child(s), RIGHT_CHILD);
-            bst_set_child(node, NULL_NODE, LEFT_CHILD);
+            bst_set_child(node, NULL_TREE_NODE, LEFT_CHILD);
 
             bst_replace(node, s);
 
@@ -479,7 +480,7 @@ void RBT::rbt_delete_node_only(uint64_t node, uint64_t &db_parent) {
 
             uint64_t s_parent = get_parent(s);
             // 进行swap, 但 color 不变
-            bst_set_child(node, NULL_NODE, LEFT_CHILD);
+            bst_set_child(node, NULL_TREE_NODE, LEFT_CHILD);
             bst_set_child(node, get_right_child(s), RIGHT_CHILD);
 
             bst_replace(node, s);
@@ -576,7 +577,7 @@ RBT_INT::RBT_INT(const char *tree, const char *color) {
     bst_construct_key_str(tree);
 
     // 空rbt，无需后续的染色
-    if (is_nodes_equal(root_, NULL_NODE)) {
+    if (is_nodes_equal(root_, NULL_TREE_NODE)) {
         return;
     }
 
@@ -603,14 +604,14 @@ RBT_INT::RBT_INT(RBT_INT &&rhs) {
     root_ = rhs.get_root();
 
     // 记得将原有的root设置为空，否则会将rbt给析构掉
-    rhs.set_root(NULL_NODE);
+    rhs.set_root(NULL_TREE_NODE);
 }
 
 RBT_INT &RBT_INT::operator=(RBT_INT &&rhs) {
     root_ = rhs.get_root();
 
     // 记得将原有的root设置为空，否则会将rbt给析构掉
-    rhs.set_root(NULL_NODE);
+    rhs.set_root(NULL_TREE_NODE);
     return *this;
 }
 
@@ -619,7 +620,7 @@ uint64_t RBT_INT::get_root() const {
 }
 
 bool RBT_INT::is_null_node(uint64_t node) const {
-    if (node == NULL_NODE) {
+    if (node == NULL_TREE_NODE) {
         return true;
     }
 
@@ -654,7 +655,7 @@ bool RBT_INT::is_nodes_equal(uint64_t first, uint64_t second) {
 
 uint64_t RBT_INT::get_parent(uint64_t node) const {
     if (is_null_node(node)) {
-        return NULL_NODE;
+        return NULL_TREE_NODE;
     }
 
     return (uint64_t)(((rbt_node_t *)node)->parent);
@@ -671,7 +672,7 @@ bool RBT_INT::set_parent(uint64_t node, uintptr_t parent) {
 
 uint64_t RBT_INT::get_left_child(uint64_t node) const {
     if (is_null_node(node)) {
-        return NULL_NODE;
+        return NULL_TREE_NODE;
     }
 
     return (uint64_t)(((rbt_node_t *)node)->left);
@@ -688,7 +689,7 @@ bool RBT_INT::set_left_child(uint64_t node, uint64_t left_child) {
 
 uint64_t RBT_INT::get_right_child(uint64_t node) const {
     if (is_null_node(node)) {
-        return NULL_NODE;
+        return NULL_TREE_NODE;
     }
 
     return (uint64_t)(((rbt_node_t *)node)->right);
@@ -722,7 +723,7 @@ bool RBT_INT::set_color(uint64_t node, rbt_color_t color) {
 
 uint64_t RBT_INT::get_key(uint64_t node) const {
     if (is_null_node(node)) {
-        return NULL_NODE;
+        return NULL_TREE_NODE;
     }
 
     return ((rbt_node_t *)node)->key;
@@ -739,7 +740,7 @@ bool RBT_INT::set_key(uint64_t node, uint64_t key) {
 
 uint64_t RBT_INT::get_value(uint64_t node) const {
     if (is_null_node(node)) {
-        return NULL_NODE;
+        return NULL_TREE_NODE;
     }
 
     return ((rbt_node_t *)node)->value;
@@ -776,7 +777,7 @@ void RBT_INT::bst_construct_key_str(const char *str) {
             ++top;
 
             uint64_t x = construct_node();
-            set_parent(x, NULL_NODE);
+            set_parent(x, NULL_TREE_NODE);
             set_left_child(x, todo);
             set_right_child(x, todo);
 
@@ -851,12 +852,12 @@ void RBT_INT::bst_construct_key_str(const char *str) {
             // pop NULL node
             if (is_nodes_equal(get_left_child(t), todo)) {
                 // left child of parent not yet processed
-                bst_set_child(t, NULL_NODE, LEFT_CHILD);
+                bst_set_child(t, NULL_TREE_NODE, LEFT_CHILD);
                 ++i;
                 continue;
             } else if (is_nodes_equal(get_right_child(t), todo)) {
                 // right child of parent not yet processed
-                bst_set_child(t, NULL_NODE, RIGHT_CHILD);
+                bst_set_child(t, NULL_TREE_NODE, RIGHT_CHILD);
                 ++i;
                 continue;
             }

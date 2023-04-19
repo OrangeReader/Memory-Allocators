@@ -25,7 +25,8 @@ const uint32_t ALLOCATED = 1;   // 已分配的block
 const uint64_t NIL = 0;         // 非法/空的虚拟地址
 
 const uint32_t MIN_EXPLICIT_FREE_LIST_BLOCKSIZE = 16;
-const uint64_t MIN_REDBLACK_TREE_BLOCKSIZE = 24;
+//const uint64_t MIN_REDBLACK_TREE_BLOCKSIZE = 24;  // rbt使用最小条件
+const uint64_t MIN_REDBLACK_TREE_BLOCKSIZE = 40;    // 使用rbt管理 >= 40的块
 
 // to allocate physical page for heap
 uint32_t extend_heap(uint32_t size);

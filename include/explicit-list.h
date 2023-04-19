@@ -41,4 +41,11 @@ private:
     uint64_t count_ = 0;
 };
 
+void explicit_list_initialize();
+uint64_t explicit_list_search(uint32_t free_block_size);
+void explicit_list_insert(uint64_t free_header);
+void explicit_list_delete(uint64_t free_header);
+void explicit_list_check_free_block();
+extern std::shared_ptr<EXPLICIT_FREE_LINKED_LIST> explicit_list;
+
 #endif //MYMALLOC_EXPLICIT_LIST_H

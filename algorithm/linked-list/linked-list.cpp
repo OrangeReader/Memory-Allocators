@@ -11,7 +11,7 @@ bool LINKED_LIST::insert_node(uint64_t node) {
         return false;
     }
 
-    if (cur_head == NULL_NODE && cur_count == 0) {
+    if (cur_head == NULL_LIST_NODE && cur_count == 0) {
         // 当前是一个空链表
         // create a new head
         set_head(node);
@@ -22,7 +22,7 @@ bool LINKED_LIST::insert_node(uint64_t node) {
         set_node_next(node, node);
 
         return true;
-    } else if (cur_head != NULL_NODE && cur_count != 0) {
+    } else if (cur_head != NULL_LIST_NODE && cur_count != 0) {
         // 当前链表不是空链表
         // 头插法: insert to head
         uint64_t head_prev = get_node_prev(cur_head);
@@ -48,7 +48,7 @@ bool LINKED_LIST::delete_node(uint64_t node) {
     uint64_t cur_head = get_head();
     uint64_t cur_count = get_count();
 
-    if (cur_head == NULL_NODE || is_null_node(node)) {
+    if (cur_head == NULL_LIST_NODE || is_null_node(node)) {
         return false;
     }
 
@@ -72,7 +72,7 @@ bool LINKED_LIST::delete_node(uint64_t node) {
 
     // 如果只有一个节点时
     if (cur_count == 0) {
-        set_head(NULL_NODE);
+        set_head(NULL_LIST_NODE);
     }
 
     return true;
@@ -81,8 +81,8 @@ bool LINKED_LIST::delete_node(uint64_t node) {
 uint64_t LINKED_LIST::get_next() {
     uint64_t cur_head = get_head();
 
-    if (cur_head == NULL_NODE) {
-        return NULL_NODE;
+    if (cur_head == NULL_LIST_NODE) {
+        return NULL_LIST_NODE;
     }
 
     uint64_t new_head = get_node_next(cur_head);
@@ -96,8 +96,8 @@ uint64_t LINKED_LIST::get_node_by_index(uint64_t index) {
     uint64_t cur_count = get_count();
 
     // index in [0, cur_count)
-    if (cur_head == NULL_NODE || index >= cur_count) {
-        return NULL_NODE;
+    if (cur_head == NULL_LIST_NODE || index >= cur_count) {
+        return NULL_LIST_NODE;
     }
 
     for (int i = 0; i < index; ++i) {
@@ -108,7 +108,7 @@ uint64_t LINKED_LIST::get_node_by_index(uint64_t index) {
 }
 
 bool LINKED_LIST::is_null_node(uint64_t node) {
-    if (node == NULL_NODE) {
+    if (node == NULL_LIST_NODE) {
         return true;
     }
     return false;
@@ -152,7 +152,7 @@ bool INT_LINKED_LIST::is_nodes_equal(uint64_t first, uint64_t second) {
 
 uint64_t INT_LINKED_LIST::get_node_prev(uint64_t node) {
     if (is_null_node(node)) {
-        return NULL_NODE;
+        return NULL_LIST_NODE;
     }
 
     return uint64_t(((int_linked_list_node_t *)node)->prev);
@@ -172,7 +172,7 @@ bool INT_LINKED_LIST::set_node_prev(uint64_t node, uint64_t prev) {
 
 uint64_t INT_LINKED_LIST::get_node_next(uint64_t node) {
     if (is_null_node(node)) {
-        return NULL_NODE;
+        return NULL_LIST_NODE;
     }
 
     return uint64_t(((int_linked_list_node_t *)node)->next);

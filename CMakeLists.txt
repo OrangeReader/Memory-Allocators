@@ -25,7 +25,8 @@ add_definitions(-DEXPLICIT_FREE_LIST)
 target_link_libraries(test-malloc PRIVATE allocator explicit-list small-list linked-list)
 
 # 采用red black tree 实现的 allocator
-#target_link_libraries(test-malloc PRIVATE allocator redblack-tree rbt)
+add_definitions(-DREDBLACK_TREE)
+target_link_libraries(test-malloc PRIVATE allocator redblack-tree rbt explicit-list small-list linked-list utils)
 
 # ==================================== #
 #           for test rbt               #

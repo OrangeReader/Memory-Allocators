@@ -227,24 +227,12 @@ static void test_malloc_free() {
     srand(42);
 
     // collection for the pointers
-    INT_LINKED_LIST *ptrs = new INT_LINKED_LIST(NULL_NODE, 0);
+    INT_LINKED_LIST *ptrs = new INT_LINKED_LIST(NULL_LIST_NODE, 0);
 
-//    bool prev = false;
     for (int i = 0; i < 100000; ++i) {
         uint32_t size = rand() % 1024 + 1; // a non zero value
 
         if ((rand() & 0x1) == 0) {
-
-//            if (size == 800 && prev) {
-//                print_heap();
-//            } else {
-//                prev = false;
-//            }
-//
-//            if (size == 878) {
-//                prev = true;
-//            }
-
             // malloc, return the payload address
             uint64_t p = mem_alloc(size);
 //            printf("\tmalloc: payload = %lu, size = %u\n", p, size);

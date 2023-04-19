@@ -82,7 +82,11 @@ bool EXPLICIT_FREE_LINKED_LIST::set_node_next(uint64_t header_vaddr, uint64_t ne
 }
 
 // The explicit free linked list
-static std::shared_ptr<EXPLICIT_FREE_LINKED_LIST> explicit_list;
+std::shared_ptr<EXPLICIT_FREE_LINKED_LIST> explicit_list;
+
+void explicit_list_initialize() {
+    explicit_list.reset(new EXPLICIT_FREE_LINKED_LIST(NULL_LIST_NODE, 0));
+}
 
 uint64_t explicit_list_search(uint32_t free_block_size) {
     // search explicit free list
@@ -104,12 +108,22 @@ uint64_t explicit_list_search(uint32_t free_block_size) {
     return NIL;
 }
 
+void explicit_list_insert(uint64_t free_header) {
+    assert(get_block_size(free_header) >= MIN_EXPLICIT_FREE_LIST_BLOCKSIZE);
+    explicit_list->insert_node(free_header);
+}
+
+void explicit_list_delete(uint64_t free_header) {
+    assert(get_block_size(free_header) >= MIN_EXPLICIT_FREE_LIST_BLOCKSIZE);
+    explicit_list->delete_node(free_header);
+}
+
 /* ------------------------------------- */
 /*  Implementation                       */
 /* ------------------------------------- */
 
 bool explicit_list_initialize_free_block() {
-    explicit_list.reset(new EXPLICIT_FREE_LINKED_LIST(NULL_NODE, 0));
+    explicit_list_initialize();
 
     uint64_t first_header = get_first_block();
 
@@ -154,8 +168,7 @@ bool explicit_list_insert_free_block(uint64_t free_header) {
             small_list_insert(free_header);
             break;
         default:
-            assert(block_size >= MIN_EXPLICIT_FREE_LIST_BLOCKSIZE);
-            explicit_list->insert_node(free_header);
+            explicit_list_insert(free_header);
             break;
     }
 
@@ -176,8 +189,7 @@ bool explicit_list_delete_free_block(uint64_t free_header) {
             small_list_delete(free_header);
             break;
         default:
-            assert(block_size >= MIN_EXPLICIT_FREE_LIST_BLOCKSIZE);
-            explicit_list->delete_node(free_header);
+            explicit_list_delete(free_header);
             break;
     }
 
