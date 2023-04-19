@@ -13,10 +13,8 @@ public:
 
     // 由于heap上的空闲块，如果全部释放掉那么就变成了隐式空闲链表
     // ⭐ small list和其他空闲块不同，它利用了head 和 foot 设置了 prev 和 next
-    // 因此析构时需要将其恢复成前一个隐式空闲链表结构
-    ~SMALL_FREE_LINKED_LIST() override {
-        delete_list();
-    }
+    // 但是我们将small list 作为 和 implicit list同等基础性的成分，均是默认情况，因此也无需析构
+    ~SMALL_FREE_LINKED_LIST() override = default;
 
 protected:
     uint64_t get_head() const override;
@@ -36,8 +34,6 @@ protected:
     bool set_node_next(uint64_t node, uint64_t next) override;
 
 private:
-    void delete_list();
-
     uint64_t head_ = 0;
     uint64_t count_ = 0;
 };

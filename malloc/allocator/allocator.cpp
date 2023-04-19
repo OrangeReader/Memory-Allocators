@@ -8,10 +8,6 @@ uint64_t heap_start_vaddr = 0;      // for pass uint-test
 uint64_t heap_end_vaddr = 4096;     // for pass uint-test
 uint8_t heap[HEAP_MAX_SIZE];
 
-#ifdef DEBUG_MALLOC
-char debug_message[1000];
-#endif
-
 /* ------------------------------------- */
 /*  Operating System Implemented         */
 /* ------------------------------------- */

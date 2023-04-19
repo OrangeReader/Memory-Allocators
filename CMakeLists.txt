@@ -12,17 +12,17 @@ add_subdirectory(malloc)
 #           for test malloc            #
 # ==================================== #
 
-add_definitions(-DIMPLICIT_FREE_LIST)
 add_executable(test-malloc test-malloc.cpp)
 
 # 链接时，让有依赖的处于前面，被依赖的处于后面
 
 # 采用implicit-list 实现的 allocator
-target_link_libraries(test-malloc PRIVATE allocator implicit-list small-list linked-list)
+#add_definitions(-DIMPLICIT_FREE_LIST)
+#target_link_libraries(test-malloc PRIVATE allocator implicit-list small-list linked-list)
 
 # 采用explicit-list 实现的 allocator
-#add_definitions(-DEXPLICIT_FREE_LIST)
-#target_link_libraries(test-malloc PRIVATE allocator explicit-list linked-list)
+add_definitions(-DEXPLICIT_FREE_LIST)
+target_link_libraries(test-malloc PRIVATE allocator explicit-list small-list linked-list)
 
 # 采用red black tree 实现的 allocator
 #target_link_libraries(test-malloc PRIVATE allocator redblack-tree rbt)

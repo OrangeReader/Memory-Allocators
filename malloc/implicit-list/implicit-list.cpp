@@ -1,8 +1,7 @@
+#include <cassert>
+
 #include "allocator.h"
 #include "small-list.h"
-
-#include <cassert>
-#include <iostream>
 
 /* ------------------------------------- */
 /*  Implicit Free List                   */
@@ -71,7 +70,6 @@ uint64_t implicit_list_search_free_block(uint32_t payload_size, uint32_t &alloc_
 
 bool implicit_list_insert_free_block(uint64_t free_header) {
     assert(free_header % 8 == 4);
-    // TODO: get last block
     assert(get_first_block() <= free_header && free_header <= get_last_block());
     assert(get_allocated(free_header) == FREE);
 

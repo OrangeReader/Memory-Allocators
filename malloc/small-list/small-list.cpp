@@ -1,8 +1,7 @@
 #include <memory>
-#include <iostream>
 
-#include "small-list.h"
 #include "allocator.h"
+#include "small-list.h"
 
 
 /* ------------------------------------- */
@@ -27,7 +26,6 @@ bool SMALL_FREE_LINKED_LIST::set_count(uint64_t new_count) {
 }
 
 bool SMALL_FREE_LINKED_LIST::destruct_node(uint64_t node) {
-    // 将其设置为隐式链表
     return true;
 }
 
@@ -84,19 +82,6 @@ bool SMALL_FREE_LINKED_LIST::set_node_next(uint64_t node, uint64_t next) {
     return true;
 }
 
-void SMALL_FREE_LINKED_LIST::delete_list() {
-    int count_copy = count();
-    for (int i = 0; i < count_copy; ++i) {
-        uint64_t temp = get_next();
-        delete_node(temp);
-
-        // 设置为size
-        // header
-        set_block_size(temp, 8);
-        set_block_size(temp + 4, 8);
-    }
-}
-
 /* ------------------------------------- */
 /*  Operations for Linked List           */
 /* ------------------------------------- */
@@ -125,6 +110,7 @@ void small_list_delete(uint64_t free_header) {
     small_list->delete_node(free_header);
 }
 
+// 参考原始explicit-list中 `check_explicit_list_correctness`
 // check 链表管理的空闲块是否符合要求 + 链表的检查
 // 1. small-list的大小均为8-Byte
 // 2. explicit-list

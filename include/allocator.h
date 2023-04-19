@@ -62,6 +62,9 @@ bool is_last_block(uint64_t vaddr);
 uint64_t get_field32_block_ptr(uint64_t header_vaddr, uint32_t min_block_size, uint32_t offset);
 bool set_field32_block_ptr(uint64_t header_vaddr, uint64_t block_ptr, uint32_t min_block_size, uint32_t offset);
 
+// for debug
+void print_heap();
+
 // interface
 bool heap_init();
 
@@ -69,5 +72,4 @@ uint64_t mem_alloc(uint32_t size);
 
 void mem_free(uint64_t payload_vaddr);
 
-void print_heap();
 #endif //MALLOC_ALLOCATOR_H

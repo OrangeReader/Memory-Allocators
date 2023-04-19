@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include "allocator.h"
 
 /** 将x向上对齐到n的整数倍
