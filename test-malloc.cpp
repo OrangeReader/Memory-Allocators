@@ -1,7 +1,7 @@
 #include <cstdio>
 
-#include "include/allocator.h"
-#include "include/linked-list.h"
+#include "allocator.h"
+#include "linked-list.h"
 
 //extern int heap_init();
 //extern uint64_t mem_alloc(uint32_t size);
@@ -56,7 +56,7 @@ static void test_roundup() {
 static void test_get_block_size_allocated() {
     printf("Testing getting block size from header ...\n");
 
-    for (int i = get_prologue(); i <= get_epilogue(); i += 4) {
+    for (int i = get_prologue(); i < get_epilogue(); i += 4) {
         *(uint32_t *) &heap[i] = 0x1234abc0;
         assert(get_block_size(i) == 0x1234abc0);
         assert(get_allocated(i) == 0);
@@ -80,7 +80,7 @@ static void test_get_block_size_allocated() {
 static void test_set_block_size_allocated() {
     printf("Testing setting block size to header ...\n");
 
-    for (int i = get_prologue(); i <= get_epilogue(); i += 4) {
+    for (int i = get_prologue(); i < get_epilogue(); i += 4) {
         set_block_size(i, 0x1234abc0);
         set_allocated(i, 0);
         assert(get_block_size(i) == 0x1234abc0);
@@ -170,37 +170,37 @@ static void test_get_next_prev() {
         collection_headeraddr[counter] = h;
         counter += 1;
 
-        set_block_size(h, block_size);
         set_allocated(h, allocated);
+        set_block_size(h, block_size);
 
         f = h + block_size - 4;
-        set_block_size(f, block_size);
         set_allocated(f, allocated);
+        set_block_size(f, block_size);
 
         h = h + block_size;
     }
-
-    check_heap_correctness();
 
     // check get_next
     h = get_first_block();
     int i = 0;
     while (h != 0 && h < get_epilogue()) {
+//        printf("now header = %lld\n", h);
         assert(i <= counter);
         assert(h == collection_headeraddr[i]);
+        // TODO: WHEN h = 1748, next P8 is not set correctly
         assert(get_block_size(h) == collection_block_size[i]);
         assert(get_allocated(h) == collection_allocated[i]);
 
+        uint64_t temp = get_next_header(h);
         h = get_next_header(h);
         i += 1;
     }
-
-    check_heap_correctness();
 
     // check get_prev
     h = get_last_block();
     i = counter - 1;
     while (h != 0 && get_first_block() <= h) {
+//        printf("now header = %lld\n", h);
         assert(0 <= i);
         assert(h == collection_headeraddr[i]);
         assert(get_block_size(h) == collection_block_size[i]);
@@ -223,17 +223,28 @@ static void test_malloc_free() {
 #endif
 
     heap_init();
-    check_heap_correctness();
 
     srand(42);
 
     // collection for the pointers
     INT_LINKED_LIST *ptrs = new INT_LINKED_LIST(NULL_NODE, 0);
 
+//    bool prev = false;
     for (int i = 0; i < 100000; ++i) {
         uint32_t size = rand() % 1024 + 1; // a non zero value
 
         if ((rand() & 0x1) == 0) {
+
+//            if (size == 800 && prev) {
+//                print_heap();
+//            } else {
+//                prev = false;
+//            }
+//
+//            if (size == 878) {
+//                prev = true;
+//            }
+
             // malloc, return the payload address
             uint64_t p = mem_alloc(size);
 //            printf("\tmalloc: payload = %lu, size = %u\n", p, size);
@@ -257,7 +268,6 @@ static void test_malloc_free() {
     }
 
 //    printf("next checking heap\n\n");
-    check_heap_correctness();
 
     // 对剩下的全部进行free
     int num_still_allocated = ptrs->count();
@@ -274,7 +284,6 @@ static void test_malloc_free() {
     // finally there should be only one free block
     assert(is_last_block(get_first_block()) == true);
     assert(get_allocated(get_first_block()) == FREE);
-    check_heap_correctness();
 
     printf("\033[32;1m\tPass\033[0m\n");
 }

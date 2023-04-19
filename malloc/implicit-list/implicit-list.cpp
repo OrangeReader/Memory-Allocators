@@ -1,44 +1,8 @@
 #include "allocator.h"
+#include "small-list.h"
+
 #include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <csignal>
-
-static int internal_heap_init();
-
-static uint64_t internal_malloc(uint32_t size);
-
-static void internal_free(uint64_t payload_vaddr);
-
-/* ------------------------------------- */
-/*  Implementation of the Interfaces     */
-/* ------------------------------------- */
-#ifdef IMPLICIT_FREE_LIST
-
-int heap_init() {
-    return internal_heap_init();
-}
-
-uint64_t mem_alloc(uint32_t size) {
-    return internal_malloc(size);
-}
-
-void mem_free(uint64_t payload_vaddr) {
-    internal_free(payload_vaddr);
-}
-
-#ifdef DEBUG_MALLOC
-
-void on_sigabrt(int signum) {
-    // like a try-catch for the asserts
-    printf("%s\n", debug_message);
-    print_heap();
-    exit(0);
-}
-
-#endif
-
-#endif
+#include <iostream>
 
 /* ------------------------------------- */
 /*  Implicit Free List                   */
@@ -69,139 +33,85 @@ const uint32_t MIN_IMPLICIT_FREE_LIST_BLOCK_SIZE = 8;
 /*  Implementation                       */
 /* ------------------------------------- */
 
-static int internal_heap_init() {
-    // reset allocated to 0
-    for (int i = 0; i < HEAP_MAX_SIZE; i += 8) {
-        *(uint64_t *) &heap[i] = 0;
-    }
+bool implicit_list_initialize_free_block() {
+    // init small block list
+    small_list_init();
 
-    // heap_start_vaddr is the starting address of the first block
-    // the payload of the first block is 8B aligned ([8])
-    // so the header address of the first block is [8] - 4 = [4]
-    heap_start_vaddr = 0;
-    heap_end_vaddr = 4096;
-
-    // set the prologue block
-    uint64_t prologue_header = get_prologue();
-    set_block_size(prologue_header, 8);
-    set_allocated(prologue_header, ALLOCATED);
-
-    uint64_t prologue_footer = prologue_header + 4;
-    set_block_size(prologue_footer, 8);
-    set_allocated(prologue_footer, ALLOCATED);
-
-    // set the epilogue block
-    // it's a header only
-    uint64_t epilogue = get_epilogue();
-    set_block_size(epilogue, 0);
-    set_allocated(epilogue, ALLOCATED);
-
-    // set the block size & allocated of the only regular block
-    uint64_t first_header = get_first_block();
-    set_block_size(first_header, 4096 - 4 - 8 - 4);
-    set_allocated(first_header, FREE);
-
-    uint64_t first_footer = get_footer(first_header);
-    set_block_size(first_footer, 4096 - 4 - 8 - 4);
-    set_allocated(first_footer, FREE);
-
-#ifdef DEBUG_MALLOC
-    // SIGABRT: 程序的异常终止
-    // 此处是 assert若不满足条件，那么会自动调用abort()结束程序，此时会发出SIGABRT信号
-    // 信号注册，当当前进程接收到SIGABRT信号后调用on_sigabrt函数
-    signal(SIGABRT, &on_sigabrt);
-#endif
-    return 1;
+    return true;
 }
 
-// size - requested payload size
-// return - the virtual address of payload
-static uint64_t internal_malloc(uint32_t size) {
-    assert(0 < size && size < HEAP_MAX_SIZE - 4 - 8 - 4);
+uint64_t implicit_list_search_free_block(uint32_t payload_size, uint32_t &alloc_block_size) {
+    // search 8-byte block list
+    if (payload_size <= 4 && small_list->count() != 0) {
+        // a small block and 8-byte is not empty
+        alloc_block_size = 8;
+        return small_list->head();
+    }
 
-    uint64_t payload_vaddr = NIL;
-    uint32_t request_block_size = round_up(size, 8) + 4 + 4;
+    // payload size round up + header + footer
+    uint32_t free_block_size = round_up(payload_size, 8) + 4 + 4;
+    alloc_block_size = free_block_size;
 
+    // search the whole heap
+    // 从头开始遍历：首次适应算法
     uint64_t b = get_first_block();
-    uint64_t epilogue = get_epilogue();
+    while (b <= get_last_block()) {
+        uint32_t b_block_size = get_block_size(b);
+        uint32_t b_allocated = get_allocated(b);
 
-    // not multi-thread safe
-    while (b != NIL && b < epilogue) {
-        payload_vaddr = try_alloc_with_splitting(b, request_block_size, MIN_IMPLICIT_FREE_LIST_BLOCK_SIZE);
-
-        if (payload_vaddr != NIL) {
-#ifdef DEBUG_MALLOC
-            check_heap_correctness();
-#endif
-            return payload_vaddr;
+        if (b_allocated == FREE && b_block_size >= free_block_size) {
+            return b;
         } else {
-            // go to next block
             b = get_next_header(b);
         }
     }
 
-    // when no enough free block for current heap
-    // request a new free physical & virtual page from OS
-    return try_extend_heap_to_alloc(request_block_size, MIN_IMPLICIT_FREE_LIST_BLOCK_SIZE);
+    return NIL;
 }
 
-static void internal_free(uint64_t payload_vaddr) {
-    if (payload_vaddr == NIL) {
-        return;
+bool implicit_list_insert_free_block(uint64_t free_header) {
+    assert(free_header % 8 == 4);
+    // TODO: get last block
+    assert(get_first_block() <= free_header && free_header <= get_last_block());
+    assert(get_allocated(free_header) == FREE);
+
+    uint32_t block_size = get_block_size(free_header);
+    assert(block_size % 8 == 0);
+    assert(block_size >= 8);
+
+    // 隐式空闲链表无需管理空闲块，对于8-Byte块需要使用small-list管理
+    switch (block_size) {
+        case 8:
+            small_list_insert(free_header);
+            break;
+        default:
+            break;
     }
 
-    assert(get_first_block() < payload_vaddr && payload_vaddr < get_epilogue());
-    assert((payload_vaddr & 0x7) == 0x0);
+    return true;
+}
 
-    // request can be first or last block
-    uint64_t req = get_header(payload_vaddr);
-    uint64_t req_footer = get_footer(req);
-    uint32_t req_allocated = get_allocated(req);
+bool implicit_list_delete_free_block(uint64_t free_header) {
+    assert(free_header % 8 == 4);
+    assert(get_first_block() <= free_header && free_header <= get_last_block());
+    assert(get_allocated(free_header) == FREE);
 
-    // otherwise it's free twice
-    assert(req_allocated == ALLOCATED);
+    uint32_t block_size = get_block_size(free_header);
+    assert(block_size % 8 == 0);
+    assert(block_size >= 8);
 
-    // block starting address of next & prev blocks
-    uint64_t next = get_next_header(req);
-    uint64_t prev = get_prev_header(req);
-
-    uint32_t next_allocated = get_allocated(next);
-    uint32_t prev_allocated = get_allocated(prev);
-
-    if (next_allocated == ALLOCATED && prev_allocated == ALLOCATED) {
-        // case 1: *A(A->F)A*
-        // ==> *AFA*
-        set_allocated(req, FREE);
-        set_allocated(req_footer, FREE);
-#ifdef DEBUG_MALLOC
-        check_heap_correctness();
-#endif
-    } else if (next_allocated == FREE && prev_allocated == ALLOCATED) {
-        // case 2: *A(A->F)FA
-        // ==> *AFFA ==> *A[FF]A merge current and next
-        merge_blocks_as_free(req, next);
-#ifdef DEBUG_MALLOC
-        check_heap_correctness();
-#endif
-    } else if (next_allocated == ALLOCATED && prev_allocated == FREE) {
-        // case 3: AF(A->F)A*
-        // ==> AFFA* ==> A[FF]A* merge current and prev
-        merge_blocks_as_free(prev, req);
-#ifdef DEBUG_MALLOC
-        check_heap_correctness();
-#endif
-    } else if (next_allocated == FREE && prev_allocated == FREE) {
-        // case 4: AF(A->F)FA
-        // ==> AFFFA ==> A[FFF]A merge current and prev and next
-        uint64_t merged = merge_blocks_as_free(prev, req);
-        merge_blocks_as_free(merged, next);
-#ifdef DEBUG_MALLOC
-        check_heap_correctness();
-#endif
-    } else {
-#ifdef DEBUG_MALLOC
-        printf("exception for free\n");
-#endif
-        exit(0);
+    // 隐式空闲链表无需管理空闲块，对于8-Byte块需要使用small-list管理
+    switch (block_size) {
+        case 8:
+            small_list_delete(free_header);
+            break;
+        default:
+            break;
     }
+
+    return true;
+}
+
+void implicit_list_check_free_block() {
+    small_list_check_free_blocks();
 }

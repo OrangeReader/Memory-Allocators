@@ -1,4 +1,3 @@
-#include "allocator.h"
 #include "explicit-list.h"
 #include <cassert>
 #include <cstdio>
@@ -49,8 +48,6 @@ void mem_free(uint64_t payload_vaddr) {
     pp pp pp pp     [8n + 8] - previous free block address
     hh hh hh h8/h0  [8n + 4] - header
 */
-
-const uint32_t MIN_EXPLICIT_FREE_LIST_BLOCKSIZE = 16;
 
 /* ------------------------------------- */
 /*  Operations for List Block Structure  */

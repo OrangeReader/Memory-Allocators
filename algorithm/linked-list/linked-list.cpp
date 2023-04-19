@@ -1,5 +1,5 @@
 #include "linked-list.h"
-#include <cstdio>
+
 /*======================================*/
 /*      Base class Implementation       */
 /*======================================*/

@@ -2,6 +2,7 @@
 #define MYMALLOC_EXPLICIT_LIST_H
 
 #include "linked-list.h"
+#include "allocator.h"
 
 // ================================================ //
 //   The implementation of the explict linked list  //

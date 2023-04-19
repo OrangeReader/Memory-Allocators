@@ -37,6 +37,10 @@ public:
         return get_count();
     }
 
+    uint64_t head() const {
+        return get_head();
+    }
+
     uint64_t get_next_node(uint64_t node) {
         return get_node_next(node);
     }

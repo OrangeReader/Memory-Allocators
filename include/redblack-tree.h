@@ -3,7 +3,6 @@
 
 #include "rbt.h"
 
-const uint64_t MIN_REDBLACK_TREE_BLOCKSIZE = 24;
 
 // ================================================ //
 //      The implementation of the free block rbt    //
